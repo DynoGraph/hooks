@@ -4,9 +4,6 @@ set(CMAKE_MODULE_PATH "${CMAKE_MODULE_PATH};${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 
 set(HOOKS_TYPE "" CACHE STRING "Select type of hooks to add. Values are 'NONE', 'GEM5', 'SNIPER', 'PIN', 'PAPI' ")
 
-# Including projects need to link against these libraries
-set(HOOKS_LIBS hooks)
-
 if (HOOKS_TYPE STREQUAL "")
 	# No hooks
 elseif (HOOKS_TYPE STREQUAL "SNIPER")
@@ -39,7 +36,8 @@ elseif (HOOKS_TYPE STREQUAL "PERF")
 	# pfm_cxx provides a c++ wrapper to the perfmon interface
 	include_directories("perf")
 	add_library(pfm_cxx STATIC perf/pfm_cxx.cpp perf/pfm_cxx.h)
-	set(HOOKS_LIBS "${HOOKS_LIBS} pfm_cxx ${PERFMON_LIBRARIES}")
+	set(HOOKS_LIBS "${HOOKS_LIBS};pfm_cxx;${PERFMON_LIBRARIES}")
+
 
 elseif (HOOKS_TYPE STREQUAL "PAPI")
 	add_definitions(-DENABLE_PAPI_HOOKS)
@@ -47,7 +45,7 @@ elseif (HOOKS_TYPE STREQUAL "PAPI")
 	include_directories(${PAPI_INCLUDE_DIRS})
 	find_package( PERFMON REQUIRED )
 	include_directories(${PERFMON_INCLUDE_DIRS})
-	set(BENCHMARK_LIBS "${PAPI_LIBRARIES};${PERFMON_LIBRARIES}")
+	set(HOOKS_LIBS "${PAPI_LIBRARIES};${PERFMON_LIBRARIES}")
 
 else ()
 	message(FATAL_ERROR "Invalid value for HOOKS_TYPE : ${HOOKS_TYPE}")
@@ -66,3 +64,4 @@ set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=gnu9x")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
 
 add_library(hooks STATIC hooks.cc hooks.h)
+target_link_libraries(hooks ${HOOKS_LIBS})
