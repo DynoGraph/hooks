@@ -101,7 +101,7 @@ public:
 //        exclude_kernel : 1,   /* don't count kernel */
 //        exclude_hv     : 1,   /* don't count hypervisor */
 //        exclude_idle   : 1,   /* don't count when idle */
-    void open(bool exclude_user, bool exclude_kernel,
+    int open(bool exclude_user, bool exclude_kernel,
               bool exclude_idle, bool exclude_hv=false)
     {
         if (_perf != -1) close(_perf);
@@ -123,11 +123,7 @@ public:
         if (exclude_hv)     _perf_attr.exclude_hv = 1;
 
         _perf = perf_event_open(&_perf_attr, 0, -1, _group_fd, 0);
-        if (_perf == -1)
-        {
-            std::cout<<"cannot open perf event: type-"<<_perf_attr.type<<"  config-"<<_perf_attr.config<<std::endl;
-            exit(50);
-        }
+        return _perf;
     }
 
     void start(void)
@@ -330,7 +326,11 @@ public:
     {
         for (size_t i=0;i<_perf_vec.size();i++)
         {
-            _perf_vec[i].open(exclude_user,exclude_kernel,exclude_idle,exclude_hv);
+            if (-1 == _perf_vec[i].open(exclude_user,exclude_kernel,exclude_idle,exclude_hv))
+            {
+                std::cout<<"cannot open perf event: "<< _event_vec[i] << "\n";
+                exit(50);
+            }
         }
     }
     void open(int group_id=-1, unsigned group_size=DEFAULT_PERF_GRP_SZ)
@@ -342,8 +342,11 @@ public:
 
         for (size_t i=start;i<end;i++)
         {
-            _perf_vec[i].open(exclude_user,exclude_kernel,exclude_idle,exclude_hv);
-
+            if (-1 == _perf_vec[i].open(exclude_user,exclude_kernel,exclude_idle,exclude_hv))
+            {
+                std::cout<<"cannot open perf event: "<< _event_vec[i] << "\n";
+                exit(50);
+            }
         }
     }
 
