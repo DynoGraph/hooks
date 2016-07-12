@@ -77,7 +77,7 @@
         // Check to make sure we have enough counters
         if (papi_num_events > PAPI_num_counters())
         {
-            printf("[DynoGraph] Error in PAPI: not enough hardware counters (need %i, have %i)\n",
+            printf("Error in PAPI: not enough hardware counters (need %i, have %i)\n",
                 papi_num_events, PAPI_num_counters());
             exit(1);
         }
@@ -86,7 +86,7 @@
         // Start the counters
         if (PAPI_start_counters(papi_event_ids, papi_num_events) != PAPI_OK)
         {
-            printf("[DynoGraph] Error in PAPI: failed to start counters.\n");
+            printf("Error in PAPI: failed to start counters.\n");
             //exit(1);
         }
     }
@@ -96,14 +96,14 @@
         // Stop the counters
         if (PAPI_stop_counters(papi_values, papi_num_events) != PAPI_OK)
         {
-            printf("[DynoGraph] Error in PAPI: failed to stop counters.\n");
+            printf("Error in PAPI: failed to stop counters.\n");
             exit(1);
         }
         // Open the output file
         //const char* papi_output_file = "/dev/stdout";
         //FILE* out = fopen(papi_output_file, "a+");
         //if (out == NULL) {
-        //    printf("[DynoGraph] Error in PAPI: failed to open output file %s", papi_output_file);
+        //    printf("Error in PAPI: failed to open output file %s", papi_output_file);
         //    exit(1);
         //}
         // Write the output as JSON
