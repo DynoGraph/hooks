@@ -13,25 +13,30 @@
 #elif defined(ENABLE_PERF_HOOKS)
     #include <perf.h>
     #include <omp.h>
-    std::vector<std::string> perf_event_names = {
-        "", "--perf-event",
-        "perf::PERF_COUNT_HW_INSTRUCTIONS",
-        "perf::PERF_COUNT_HW_CACHE_L1D:READ:ACCESS",
-        "perf::PERF_COUNT_HW_CACHE_L1D:WRITE:ACCESS",
-        "perf::PERF_COUNT_HW_CPU_CYCLES",
-        "perf::PERF_COUNT_HW_CACHE_L1D:READ:MISS",
-        "perf::PERF_COUNT_HW_CACHE_L1D:WRITE:MISS",
-        "snb_ep::OFFCORE_REQUESTS:ALL_DATA_RD:k=1:u=1:e=0:i=0:c=0:t=0",
-        "perf::PERF_COUNT_HW_CACHE_LL:READ:ACCESS",
-        "perf::PERF_COUNT_HW_CACHE_LL:READ:MISS",
-        "snb_ep::BR_MISP_RETIRED:ALL_BRANCHES:k=1:u=1:e=0:i=0:c=0:t=0",
-        "perf::PERF_COUNT_HW_CACHE_LL:WRITE:ACCESS",
-        "perf::PERF_COUNT_HW_CACHE_LL:WRITE:MISS",
-        "snb_ep::BR_INST_RETIRED:ALL_BRANCHES:k=1:u=1:e=0:i=0:c=0:t=0",
-        "perf::PERF_COUNT_HW_CACHE_LL:PREFETCH:ACCESS",
-        "perf::PERF_COUNT_HW_CACHE_LL:PREFETCH:MISS",
-    };
-    static gBenchPerf_event perf_events(perf_event_names);
+
+    static std::vector<std::string> getPerfEventNames()
+    {
+        std::vector<std::string> event_names = {"", "--perf-event"};
+        if (const char* env_names = getenv("PERF_EVENT_NAMES"))
+        {
+            char * names = new char[strlen(env_names) + 1];
+            strcpy(names, env_names);
+            char * p = strtok(names, " ");
+            while (p)
+            {
+                event_names.push_back(std::string(p));
+                p = strtok(NULL, " ");
+            }
+            delete[] names;
+
+        } else {
+            printf("WARNING: No perf events found in environment; set PERF_EVENT_NAMES.\n");
+        }
+        return event_names;
+    }
+
+    static std::vector<std::string> perf_event_names = getPerfEventNames();
+    static gBenchPerf_event perf_events(perf_event_names, false);
     static gBenchPerf_multi perf(omp_get_max_threads(), perf_events);
 
 #elif defined(ENABLE_PAPI_HOOKS)
