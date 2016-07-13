@@ -381,21 +381,22 @@ public:
         }
     }
 
-    void print(int group_id=-1, unsigned group_size=DEFAULT_PERF_GRP_SZ)
+    std::string toString(int group_id=-1, unsigned group_size=DEFAULT_PERF_GRP_SZ)
     {
         size_t start = (group_id == -1)? 0 : group_id*group_size;
         size_t end = (group_id == -1)? _perf_vec.size() : start+group_size;
-        if (start >= _perf_vec.size()) return;
+        if (start >= _perf_vec.size()) return "{}";
         if (end > _perf_vec.size()) end = _perf_vec.size();
-
-        std::cout << "{\n";
+        std::ostringstream oss;
+        oss << "{\n";
         for (size_t i=start;i<end;i++)
         {
-            if (i-start != 0) { std::cout << ",\n"; }
-            std::cout<<"\""<<_event_vec[i]<<"\":"<<_cnt_vec[i];
-            if (_multiplexing_vec[i]) std::cout<<"\tMUX";
+            if (i-start != 0) { oss << ",\n"; }
+            oss<<"\""<<_event_vec[i]<<"\":"<<_cnt_vec[i];
+            if (_multiplexing_vec[i]) oss<<"\tMUX";
         }
-        std::cout << "\n}\n";
+        oss << "\n}\n";
+        return oss.str();
     }
 
     unsigned long long event_counter(size_t id)
@@ -700,29 +701,31 @@ public:
         if (tid >= _perf_vec.size()) return;
         _perf_vec[tid].stop(group_id, group_size);
     }
-    void print(int group_id=-1, unsigned group_size=DEFAULT_PERF_GRP_SZ)
+    std::string toString(int group_id=-1, unsigned group_size=DEFAULT_PERF_GRP_SZ)
     {
         size_t start = (group_id == -1)? 0 : group_id*group_size;
         size_t end = (group_id == -1)? _perf_vec[0].get_event_cnt() : start+group_size;
-        if (start >= _perf_vec[0].get_event_cnt()) return;
+        if (start >= _perf_vec[0].get_event_cnt()) return "{}";
         if (end > _perf_vec[0].get_event_cnt()) end = _perf_vec[0].get_event_cnt();
         bool mux=false;
-        std::cout << "{\n";
+        std::ostringstream oss;
+        oss << "{\n";
         for (size_t c=start;c<end;c++)
         {
-            if (c-start != 0) { std::cout << ",\n"; }
-            std::cout<<"\""<<_perf_vec[0].event_name(c)<<"\":";
-            std::cout<<"[";
+            if (c-start != 0) { oss << ",\n"; }
+            oss<<"\""<<_perf_vec[0].event_name(c)<<"\":";
+            oss<<"[";
             for (size_t i=0;i<_perf_vec.size();i++)
             {
-                if (i != 0) { std::cout<<","; }
-                std::cout<< _perf_vec[i].event_counter(c);
+                if (i != 0) { oss<<","; }
+                oss<< _perf_vec[i].event_counter(c);
                 mux |= _perf_vec[i].event_mux(c);
             }
-            std::cout<<"]";
+            oss<<"]";
         }
-        std::cout<<"\n,\"MUX\":"<<(mux?"true":"false");
-        std::cout << "\n}\n";
+        oss<<"\n,\"MUX\":"<<(mux?"true":"false");
+        oss << "\n}\n";
+        return oss.str();
     }
 protected:
     std::vector<gBenchPerf_event> _perf_vec;

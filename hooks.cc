@@ -1,11 +1,16 @@
 #include "hooks.h"
 #include <stdio.h>
 #include <stdlib.h>
+#include "json.hpp"
+using json = nlohmann::json;
+
+#include <chrono>
+using namespace std::chrono;
+
+static time_point<steady_clock> t1, t2;
 
 #if defined(ENABLE_SNIPER_HOOKS)
     #include <hooks_base.h>
-    // Marks which iteration we are on
-    int sniper_hooks_iter_id = 0;
 #elif defined(ENABLE_GEM5_HOOKS)
     #include <util/m5/m5op.h>
 #elif defined(ENABLE_PIN_HOOKS)
@@ -13,6 +18,7 @@
 #elif defined(ENABLE_PERF_HOOKS)
     #include <perf.h>
     #include <omp.h>
+    #include <chrono>
 
     static std::vector<std::string> getPerfEventNames()
     {
@@ -45,13 +51,11 @@
     // Get the number of elements in a static array
     #define ARRAY_LENGTH(X) (sizeof(X)/sizeof(X[0]))
 
-    static FILE* papi_output_file = NULL;
-
-    typedef struct papi_counter
+    struct papi_counter
     {
         int id;
         const char * name;
-    } papi_counter;
+    };
 
     // List of counters to record
     static papi_counter papi_counters[] =
@@ -91,7 +95,7 @@
         }
     }
 
-    void papi_stop()
+    std::string papi_stop()
     {
         // Stop the counters
         if (PAPI_stop_counters(papi_values, papi_num_events) != PAPI_OK)
@@ -99,26 +103,18 @@
             printf("Error in PAPI: failed to stop counters.\n");
             exit(1);
         }
-        // Open the output file
-        //const char* papi_output_file = "/dev/stdout";
-        //FILE* out = fopen(papi_output_file, "a+");
-        //if (out == NULL) {
-        //    printf("Error in PAPI: failed to open output file %s", papi_output_file);
-        //    exit(1);
-        //}
-        // Write the output as JSON
-        printf("{");
+
+        json results;
         for (int i = 0; i < papi_num_events; ++i)
         {
-            printf("\n\t\"%s\":%lli", papi_counters[i].name, papi_values[i]);
-            if (i != papi_num_events - 1) { printf(","); }
+            results[papi_counters[i].name] = papi_values[i];
         }
-        printf("\n}\n");
-        // fclose(out);
+        return results.dump();
     }
 #endif
 
-int __attribute__ ((noinline)) hooks_region_begin(int64_t trial) {
+int __attribute__ ((noinline)) hooks_region_begin(std::string name, int64_t trial) {
+
     #if defined(ENABLE_SNIPER_HOOKS)
         parmacs_roi_begin();
     #elif defined(ENABLE_GEM5_HOOKS)
@@ -135,11 +131,13 @@ int __attribute__ ((noinline)) hooks_region_begin(int64_t trial) {
     #elif defined(ENABLE_PAPI_HOOKS)
         papi_start();
     #endif
-
+    t1 = steady_clock::now();
     return 0;
 }
 
-int __attribute__ ((noinline)) hooks_region_end(int64_t trial) {
+int __attribute__ ((noinline)) hooks_region_end(std::string name, int64_t trial) {
+    t2 = steady_clock::now();
+    json results;
     #if defined(ENABLE_SNIPER_HOOKS)
         parmacs_roi_end();
     #elif defined(ENABLE_GEM5_HOOKS)
@@ -152,10 +150,15 @@ int __attribute__ ((noinline)) hooks_region_end(int64_t trial) {
             unsigned tid = omp_get_thread_num();
             perf.stop(tid, trial);
         }
-        perf.print(trial);
+        results = json::parse(perf.toString(trial));
     #elif defined(ENABLE_PAPI_HOOKS)
-        papi_stop();
+        results = json::parse(papi_stop());
     #endif
+
+    results["region_name"] = name;
+    results["trial"] = trial;
+    results["time_ms"] = duration<double, std::milli>(t2-t1).count();
+    std::cout << std::setw(2) << results << std::endl;
 
     return 0;
 }
