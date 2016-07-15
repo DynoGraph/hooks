@@ -41,9 +41,21 @@ static time_point<steady_clock> t1, t2;
         return event_names;
     }
 
+    static int getPerfGroupSize()
+    {
+        if (const char* env_group_size = getenv("PERF_GROUP_SIZE"))
+        {
+            return atoi(env_group_size);
+        } else {
+            printf("WARNING: Perf group size unspecified, defaulting to 4\n");
+            return 4;
+        }
+    }
+
     static std::vector<std::string> perf_event_names = getPerfEventNames();
     static gBenchPerf_event perf_events(perf_event_names, false);
     static gBenchPerf_multi perf(omp_get_max_threads(), perf_events);
+    static int perf_group_size = getPerfGroupSize();
 
 #elif defined(ENABLE_PAPI_HOOKS)
     #include <papi.h>
@@ -125,8 +137,8 @@ int __attribute__ ((noinline)) hooks_region_begin(std::string name, int64_t tria
         #pragma omp parallel
         {
             unsigned tid = omp_get_thread_num();
-            perf.open(tid, trial);
-            perf.start(tid, trial);
+            perf.open(tid, trial, perf_group_size);
+            perf.start(tid, trial, perf_group_size);
         }
     #elif defined(ENABLE_PAPI_HOOKS)
         papi_start();
@@ -148,9 +160,9 @@ int __attribute__ ((noinline)) hooks_region_end(std::string name, int64_t trial)
         #pragma omp parallel
         {
             unsigned tid = omp_get_thread_num();
-            perf.stop(tid, trial);
+            perf.stop(tid, trial, perf_group_size);
         }
-        results = json::parse(perf.toString(trial));
+        results = json::parse(perf.toString(trial, perf_group_size));
     #elif defined(ENABLE_PAPI_HOOKS)
         results = json::parse(papi_stop());
     #endif
