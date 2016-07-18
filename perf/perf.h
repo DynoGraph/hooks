@@ -16,6 +16,7 @@
 #include <stdio.h>
 #include <cstring>
 #include <string.h>
+#include <sstream>
 
 #ifndef NO_PFM
 #include "pfm_cxx.h"
