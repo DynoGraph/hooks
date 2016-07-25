@@ -115,6 +115,8 @@ Hooks::papi_stop()
     }
     return results.dump();
 }
+#else
+Hooks::Hooks(){};
 #endif
 
 int __attribute__ ((noinline))

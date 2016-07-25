@@ -46,6 +46,8 @@ private:
 	std::vector<papi_counter> papi_counters;
     void papi_start();
     std::string papi_stop();
+#else
+    Hooks();
 #endif
 };
 
