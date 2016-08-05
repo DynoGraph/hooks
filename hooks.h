@@ -21,13 +21,16 @@ class Hooks
 public:
     static Hooks& getInstance();
     // Marks the start of a new phase of computation
-	int region_begin(std::string name, int64_t trial);
+	int region_begin(std::string name);
 	// Marks the end of the current phase of computation
-	int region_end(std::string name, int64_t trial);
+	int region_end(std::string name);
+	// Marks the beginning of a new set of regions
+	void next_trial();
     Hooks(Hooks const&)         = delete;
     void operator=(Hooks const&)  = delete;
 private:
     std::chrono::time_point<std::chrono::steady_clock> t1, t2;
+	int64_t trial;
 #if defined(ENABLE_PERF_HOOKS)
     Hooks();
     std::vector<std::string> perf_event_names;

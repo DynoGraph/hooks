@@ -120,7 +120,7 @@ Hooks::Hooks(){};
 #endif
 
 int __attribute__ ((noinline))
-Hooks::region_begin(std::string name, int64_t trial) {
+Hooks::region_begin(std::string name) {
 
     #if defined(ENABLE_SNIPER_HOOKS)
         parmacs_roi_begin();
@@ -143,7 +143,7 @@ Hooks::region_begin(std::string name, int64_t trial) {
 }
 
 int __attribute__ ((noinline))
-Hooks::region_end(std::string name, int64_t trial) {
+Hooks::region_end(std::string name) {
     t2 = steady_clock::now();
     json results;
     #if defined(ENABLE_SNIPER_HOOKS)
@@ -169,4 +169,10 @@ Hooks::region_end(std::string name, int64_t trial) {
     std::cout << std::setw(2) << results << std::endl;
 
     return 0;
+}
+
+void
+Hooks::next_trial()
+{
+    trial += 1;
 }
