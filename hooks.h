@@ -30,15 +30,14 @@ public:
 	int region_begin(std::string name);
 	// Marks the end of the current phase of computation
 	int region_end(std::string name);
-	// Marks the beginning of a new set of regions
-	void next_trial();
+	// Marks which trial we are in
+	int64_t trial;
 	// Record the traversal of an edge during an algorithm
 	void traverse_edge(int64_t n = 1);
-    Hooks(Hooks const&)         = delete;
-    void operator=(Hooks const&)  = delete;
+	Hooks(Hooks const&)         = delete;
+	void operator=(Hooks const&)  = delete;
 private:
-    std::chrono::time_point<std::chrono::steady_clock> t1, t2;
-	int64_t trial;
+	std::chrono::time_point<std::chrono::steady_clock> t1, t2;
 	std::vector<int64_t> num_traversed_edges;
 #if defined(ENABLE_PERF_HOOKS)
     Hooks();

@@ -180,12 +180,6 @@ Hooks::region_end(std::string name) {
     return 0;
 }
 
-void
-Hooks::next_trial()
-{
-    trial += 1;
-}
-
 extern "C" void traverse_edge(int64_t n)
 {
     Hooks::getInstance().traverse_edge(n);
