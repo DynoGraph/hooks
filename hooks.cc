@@ -47,11 +47,18 @@ Hooks::getPerfGroupSize()
     }
 }
 
+void
+Hooks::traverse_edge(int64_t n)
+{
+    num_traversed_edges[omp_get_thread_num()] += n;
+}
+
 Hooks::Hooks()
  : perf_event_names(getPerfEventNames())
  , perf_group_size(getPerfGroupSize())
  , perf_events(perf_event_names, false)
  , perf(omp_get_max_threads(), perf_events)
+ , num_traversed_edges(omp_get_max_threads())
 {
 
 }
@@ -132,6 +139,7 @@ Hooks::region_begin(std::string name) {
         #pragma omp parallel
         {
             unsigned tid = omp_get_thread_num();
+            num_traversed_edges[tid] = 0;
             perf.open(tid, trial, perf_group_size);
             perf.start(tid, trial, perf_group_size);
         }
@@ -159,6 +167,7 @@ Hooks::region_end(std::string name) {
             perf.stop(tid, trial, perf_group_size);
         }
         results = json::parse(perf.toString(trial, perf_group_size));
+        results["num_traversed_edges"] = num_traversed_edges;
     #elif defined(ENABLE_PAPI_HOOKS)
         results = json::parse(papi_stop());
     #endif
@@ -175,4 +184,9 @@ void
 Hooks::next_trial()
 {
     trial += 1;
+}
+
+extern "C" void traverse_edge(int64_t n)
+{
+    Hooks::getInstance().traverse_edge(n);
 }

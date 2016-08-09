@@ -1,3 +1,9 @@
+#pragma once
+
+extern "C" {
+#include "edge_count.h"
+}
+
 #include <string>
 #include <inttypes.h>
 #include <chrono>
@@ -26,11 +32,14 @@ public:
 	int region_end(std::string name);
 	// Marks the beginning of a new set of regions
 	void next_trial();
+	// Record the traversal of an edge during an algorithm
+	void traverse_edge(int64_t n = 1);
     Hooks(Hooks const&)         = delete;
     void operator=(Hooks const&)  = delete;
 private:
     std::chrono::time_point<std::chrono::steady_clock> t1, t2;
 	int64_t trial;
+	std::vector<int64_t> num_traversed_edges;
 #if defined(ENABLE_PERF_HOOKS)
     Hooks();
     std::vector<std::string> perf_event_names;
@@ -53,4 +62,3 @@ private:
     Hooks();
 #endif
 };
-
