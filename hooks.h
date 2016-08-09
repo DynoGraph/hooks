@@ -42,9 +42,9 @@ private:
 #if defined(ENABLE_PERF_HOOKS)
     Hooks();
     std::vector<std::string> perf_event_names;
+    int perf_group_size;
     gBenchPerf_event perf_events;
     gBenchPerf_multi perf;
-    int perf_group_size;
     std::vector<std::string> getPerfEventNames();
     int getPerfGroupSize();
 #elif defined(ENABLE_PAPI_HOOKS)

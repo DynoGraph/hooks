@@ -54,11 +54,11 @@ Hooks::traverse_edge(int64_t n)
 }
 
 Hooks::Hooks()
- : perf_event_names(getPerfEventNames())
+ : num_traversed_edges(omp_get_max_threads())
+ , perf_event_names(getPerfEventNames())
  , perf_group_size(getPerfGroupSize())
  , perf_events(perf_event_names, false)
  , perf(omp_get_max_threads(), perf_events)
- , num_traversed_edges(omp_get_max_threads())
 {
 
 }
