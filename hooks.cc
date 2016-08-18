@@ -167,7 +167,13 @@ Hooks::region_end(std::string name) {
             perf.stop(tid, trial, perf_group_size);
         }
         results = json::parse(perf.toString(trial, perf_group_size));
-        results["num_traversed_edges"] = num_traversed_edges;
+        // Only print traversed edges if the function was used
+        bool total_edges_traversed = 0;
+        for (int64_t n : num_traversed_edges) { total_edges_traversed += n; }
+        if (total_edges_traversed > 0)
+        {
+            results["num_traversed_edges"] = num_traversed_edges;
+        }
     #elif defined(ENABLE_PAPI_HOOKS)
         results = json::parse(papi_stop());
     #endif
