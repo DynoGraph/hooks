@@ -2,7 +2,12 @@ cmake_minimum_required (VERSION 2.8.11)
 project (HOOKS)
 set(CMAKE_MODULE_PATH "${CMAKE_MODULE_PATH};${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 
+set(HOOKS_PRETTY_PRINT FALSE CACHE BOOL "Print formatted JSON to stdout, instead of all on one line")
 set(HOOKS_TYPE "" CACHE STRING "Select type of hooks to add. Values are 'NONE', 'GEM5', 'SNIPER', 'PIN', 'PAPI' ")
+
+if(${HOOKS_PRETTY_PRINT})
+	add_definitions(-DHOOKS_PRETTY_PRINT)
+endif()
 
 if (HOOKS_TYPE STREQUAL "")
 	# No hooks

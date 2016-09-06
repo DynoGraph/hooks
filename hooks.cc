@@ -181,7 +181,11 @@ Hooks::region_end(std::string name) {
     results["region_name"] = name;
     results["trial"] = trial;
     results["time_ms"] = duration<double, std::milli>(t2-t1).count();
-    std::cout << std::setw(2) << results << std::endl;
+    std::cout
+#ifdef HOOKS_PRETTY_PRINT
+    << std::setw(2)
+#endif
+    << results << std::endl;
 
     return 0;
 }
