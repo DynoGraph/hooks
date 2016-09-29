@@ -5,6 +5,10 @@
 using json = nlohmann::json;
 using namespace std::chrono;
 
+#if defined(USE_MPI)
+  #include <mpi.h>
+#endif
+
 Hooks& Hooks::getInstance()
 {
     static Hooks instance;
@@ -180,6 +184,11 @@ Hooks::region_end(std::string name) {
 
     results["region_name"] = name;
     results["trial"] = trial;
+    #if defined(USE_MPI)
+    int rank;
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+    results["pid"] = rank;
+    #endif
     results["time_ms"] = duration<double, std::milli>(t2-t1).count();
     std::cout
 #ifdef HOOKS_PRETTY_PRINT
