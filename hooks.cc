@@ -172,7 +172,7 @@ Hooks::region_end(std::string name) {
         }
         results = json::parse(perf.toString(trial, perf_group_size));
         // Only print traversed edges if the function was used
-        bool total_edges_traversed = 0;
+        int64_t total_edges_traversed = 0;
         for (int64_t n : num_traversed_edges) { total_edges_traversed += n; }
         if (total_edges_traversed > 0)
         {
