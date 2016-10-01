@@ -184,6 +184,7 @@ Hooks::region_end(std::string name) {
 
     results["region_name"] = name;
     results["trial"] = trial;
+    results["batch"] = batch;
     #if defined(USE_MPI)
     int rank;
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);

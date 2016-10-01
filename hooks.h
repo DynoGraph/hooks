@@ -32,6 +32,8 @@ public:
 	int region_end(std::string name);
 	// Marks which trial we are in
 	int64_t trial;
+	// Marks which batch we are in
+	int64_t batch;
 	// Record the traversal of an edge during an algorithm
 	void traverse_edge(int64_t n = 1);
 	Hooks(Hooks const&)         = delete;
