@@ -29,8 +29,8 @@ find_library(PERFMON_LIBRARIES
 #set_target_properties(${PERFMON_LIBRARIES} PROPERTIES TYPE "STATIC_LIBRARY")
 
 find_path(PERFMON_INCLUDE_DIRS
-    NAMES pfmlib.h
-    HINTS ${PERFMON_PREFIX}/include/perfmon
+    NAMES perfmon/pfmlib.h
+    HINTS ${PERFMON_PREFIX}/include
 )
 
 include(FindPackageHandleStandardArgs)
