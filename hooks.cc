@@ -1,24 +1,51 @@
 #include "hooks.h"
-#include <stdio.h>
-#include <stdlib.h>
 #include "json.hpp"
+
 using json = nlohmann::json;
 using namespace std::chrono;
+using std::cerr;
+using std::string;
+
+#if defined(_OPENMP)
+  #include <omp.h>
+#endif
 
 #if defined(USE_MPI)
   #include <mpi.h>
 #endif
 
+static string
+get_output_filename()
+{
+    if (const char* filename = getenv("HOOKS_FILENAME"))
+    {
+        return string(filename);
+    } else {
+        cerr << "WARNING: HOOKS_FILENAME unset, defaulting to stdout.\n";
+        return "/dev/stdout";
+    }
+}
+
 Hooks& Hooks::getInstance()
 {
-    static Hooks instance;
+#if defined(_OPENMP)
+    int num_threads = omp_get_max_threads();
+#else
+    int num_threads = 1;
+#endif
+    static Hooks instance(get_output_filename(), num_threads);
     return instance;
 }
 
 void
 Hooks::traverse_edge(int64_t n)
 {
-    num_traversed_edges[omp_get_thread_num()] += n;
+#if defined(_OPENMP)
+    int tid = omp_get_thread_num();
+#else
+    int tid = 0;
+#endif
+    num_traversed_edges[tid] += n;
 }
 
 #if defined(ENABLE_PERF_HOOKS)
@@ -40,7 +67,7 @@ Hooks::getPerfEventNames()
         delete[] names;
 
     } else {
-        printf("WARNING: No perf events found in environment; set PERF_EVENT_NAMES.\n");
+        cerr << "WARNING: No perf events found in environment; set PERF_EVENT_NAMES.\n";
     }
     return event_names;
 }
@@ -52,22 +79,25 @@ Hooks::getPerfGroupSize()
     {
         return atoi(env_group_size);
     } else {
-        printf("WARNING: Perf group size unspecified, defaulting to 4\n");
+        cerr << "WARNING: Perf group size unspecified, defaulting to 4\n";
         return 4;
     }
 }
 
-Hooks::Hooks()
- : num_traversed_edges(omp_get_max_threads())
+#endif
+
+Hooks::Hooks(std::string filename, int num_threads)
+ : out(filename)
+ , num_traversed_edges(num_threads)
+#if defined(ENABLE_PERF_HOOKS)
  , perf_event_names(getPerfEventNames())
  , perf_group_size(getPerfGroupSize())
  , perf_events(perf_event_names, false)
- , perf(omp_get_max_threads(), perf_events)
+ , perf(num_threads, perf_events)
+#endif
 {
 
 }
-
-#endif
 
 int __attribute__ ((noinline))
 Hooks::region_begin(std::string name) {
@@ -79,9 +109,13 @@ Hooks::region_begin(std::string name) {
     #elif defined(ENABLE_PIN_HOOKS)
         __asm__("");
     #elif defined(ENABLE_PERF_HOOKS)
-        #pragma omp parallel
+        #if defined(_OPENMP)
+            int tid = omp_get_thread_num();
+            #pragma omp parallel
+        #else
+            int tid = 0;
+        #endif
         {
-            unsigned tid = omp_get_thread_num();
             num_traversed_edges[tid] = 0;
             perf.open(tid, trial, perf_group_size);
             perf.start(tid, trial, perf_group_size);
@@ -102,9 +136,13 @@ Hooks::region_end(std::string name) {
     #elif defined(ENABLE_PIN_HOOKS)
         __asm__("");
     #elif defined(ENABLE_PERF_HOOKS)
-        #pragma omp parallel
+        #if defined(_OPENMP)
+            int tid = omp_get_thread_num();
+            #pragma omp parallel
+        #else
+            int tid = 0;
+        #endif
         {
-            unsigned tid = omp_get_thread_num();
             perf.stop(tid, trial, perf_group_size);
         }
         results = json::parse(perf.toString(trial, perf_group_size));

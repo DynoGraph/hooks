@@ -8,7 +8,8 @@ extern "C" {
 #include <inttypes.h>
 #include <chrono>
 #include <vector>
-#include <omp.h>
+#include <iostream>
+#include <fstream>
 
 #if defined(ENABLE_SNIPER_HOOKS)
     #include <hooks_base.h>
@@ -37,17 +38,16 @@ public:
 	Hooks(Hooks const&)         = delete;
 	void operator=(Hooks const&)  = delete;
 private:
+    std::ofstream out;
 	std::chrono::time_point<std::chrono::steady_clock> t1, t2;
 	std::vector<int64_t> num_traversed_edges;
 #if defined(ENABLE_PERF_HOOKS)
-    Hooks();
     std::vector<std::string> perf_event_names;
     int perf_group_size;
     gBenchPerf_event perf_events;
     gBenchPerf_multi perf;
     std::vector<std::string> getPerfEventNames();
     int getPerfGroupSize();
-#else
-    Hooks() = default;
 #endif
+    Hooks(std::string filename, int num_threads);
 };
