@@ -67,67 +67,6 @@ Hooks::Hooks()
 
 }
 
-#elif defined(ENABLE_PAPI_HOOKS)
-
-Hooks::Hooks()
-// TODO initialize these from environment or parameter
- : papi_counters({
-    {PAPI_TOT_INS, "total_instructions"},
-    {PAPI_LD_INS, "total_loads"},
-    {PAPI_TOT_CYC, "total_cycles"},
-    {PAPI_L3_TCA, "L3_cache_accesses"},
-    {PAPI_L3_TCM, "L3_cache_misses"},
-    {PAPI_BR_CN, "total_branches"},
-    {PAPI_BR_MSP, "branch_mispredictions"},
-    })
-{
-
-}
-
-void
-Hooks::papi_start()
-{
-    // Check to make sure we have enough counters
-    if (papi_counters.size() > PAPI_num_counters())
-    {
-        printf("Error in PAPI: not enough hardware counters (need %li, have %i)\n",
-            papi_counters.size(), PAPI_num_counters());
-        exit(1);
-    }
-    // Copy event ids to an array
-    std::vector<int> papi_event_ids(papi_counters.size());
-    for (int i = 0; i < papi_counters.size(); ++i)
-    {
-        papi_event_ids[i] = papi_counters[i].id;
-    }
-    // Start the counters
-    if (PAPI_start_counters(&papi_event_ids[0], papi_event_ids.size()) != PAPI_OK)
-    {
-        printf("Error in PAPI: failed to start counters.\n");
-        //exit(1);
-    }
-}
-
-std::string
-Hooks::papi_stop()
-{
-    // Stop the counters
-    std::vector<long long> papi_values(papi_counters.size());
-    if (PAPI_stop_counters(&papi_values[0], papi_values.size()) != PAPI_OK)
-    {
-        printf("Error in PAPI: failed to stop counters.\n");
-        exit(1);
-    }
-
-    json results;
-    for (int i = 0; i < papi_values.size(); ++i)
-    {
-        results[papi_counters[i].name] = papi_values[i];
-    }
-    return results.dump();
-}
-#else
-Hooks::Hooks(){};
 #endif
 
 int __attribute__ ((noinline))
@@ -147,8 +86,6 @@ Hooks::region_begin(std::string name) {
             perf.open(tid, trial, perf_group_size);
             perf.start(tid, trial, perf_group_size);
         }
-    #elif defined(ENABLE_PAPI_HOOKS)
-        papi_start();
     #endif
     t1 = steady_clock::now();
     return 0;
@@ -178,8 +115,6 @@ Hooks::region_end(std::string name) {
         {
             results["num_traversed_edges"] = num_traversed_edges;
         }
-    #elif defined(ENABLE_PAPI_HOOKS)
-        results = json::parse(papi_stop());
     #endif
 
     results["region_name"] = name;

@@ -43,15 +43,6 @@ elseif (HOOKS_TYPE STREQUAL "PERF")
 	add_library(pfm_cxx STATIC perf/pfm_cxx.cpp perf/pfm_cxx.h)
 	set(HOOKS_LIBS "${HOOKS_LIBS};pfm_cxx;${PERFMON_LIBRARIES}")
 
-
-elseif (HOOKS_TYPE STREQUAL "PAPI")
-	add_definitions(-DENABLE_PAPI_HOOKS)
-	find_package( PAPI REQUIRED )
-	include_directories(${PAPI_INCLUDE_DIRS})
-	find_package( PERFMON REQUIRED )
-	include_directories(${PERFMON_INCLUDE_DIRS})
-	set(HOOKS_LIBS "${PAPI_LIBRARIES};${PERFMON_LIBRARIES}")
-
 else ()
 	message(FATAL_ERROR "Invalid value for HOOKS_TYPE : ${HOOKS_TYPE}")
 endif()

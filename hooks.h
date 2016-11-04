@@ -18,8 +18,6 @@ extern "C" {
 #elif defined(ENABLE_PERF_HOOKS)
     #include <perf.h>
     #include <omp.h>
-#elif defined(ENABLE_PAPI_HOOKS)
-    #include <papi.h>
 #endif
 
 class Hooks
@@ -49,16 +47,6 @@ private:
     gBenchPerf_multi perf;
     std::vector<std::string> getPerfEventNames();
     int getPerfGroupSize();
-#elif defined(ENABLE_PAPI_HOOKS)
-    Hooks();
-    struct papi_counter
-	{
-	    int id;
-	    std::string name;
-	};
-	std::vector<papi_counter> papi_counters;
-    void papi_start();
-    std::string papi_stop();
 #else
     Hooks();
 #endif
