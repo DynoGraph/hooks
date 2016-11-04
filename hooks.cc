@@ -8,6 +8,11 @@ using std::string;
 
 #if defined(_OPENMP)
   #include <omp.h>
+  int get_num_threads() { return omp_get_max_threads(); }
+  int get_thread_id() { return omp_get_thread_num(); }
+#else
+  int get_num_threads() { return 1; }
+  int get_thread_id() { return 0; }
 #endif
 
 #if defined(USE_MPI)
@@ -28,24 +33,14 @@ get_output_filename()
 
 Hooks& Hooks::getInstance()
 {
-#if defined(_OPENMP)
-    int num_threads = omp_get_max_threads();
-#else
-    int num_threads = 1;
-#endif
-    static Hooks instance(get_output_filename(), num_threads);
+    static Hooks instance(get_output_filename(), get_num_threads());
     return instance;
 }
 
 void
 Hooks::traverse_edge(int64_t n)
 {
-#if defined(_OPENMP)
-    int tid = omp_get_thread_num();
-#else
-    int tid = 0;
-#endif
-    num_traversed_edges[tid] += n;
+    num_traversed_edges[get_thread_id()] += n;
 }
 
 #if defined(ENABLE_PERF_HOOKS)
@@ -109,13 +104,9 @@ Hooks::region_begin(std::string name) {
     #elif defined(ENABLE_PIN_HOOKS)
         __asm__("");
     #elif defined(ENABLE_PERF_HOOKS)
-        #if defined(_OPENMP)
-            int tid = omp_get_thread_num();
-            #pragma omp parallel
-        #else
-            int tid = 0;
-        #endif
+        #pragma omp parallel
         {
+            int tid = get_thread_id();
             num_traversed_edges[tid] = 0;
             perf.open(tid, trial, perf_group_size);
             perf.start(tid, trial, perf_group_size);
@@ -136,13 +127,9 @@ Hooks::region_end(std::string name) {
     #elif defined(ENABLE_PIN_HOOKS)
         __asm__("");
     #elif defined(ENABLE_PERF_HOOKS)
-        #if defined(_OPENMP)
-            int tid = omp_get_thread_num();
-            #pragma omp parallel
-        #else
-            int tid = 0;
-        #endif
+        #pragma omp parallel
         {
+            int tid = get_thread_id();
             perf.stop(tid, trial, perf_group_size);
         }
         results = json::parse(perf.toString(trial, perf_group_size));
