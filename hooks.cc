@@ -15,6 +15,12 @@ Hooks& Hooks::getInstance()
     return instance;
 }
 
+void
+Hooks::traverse_edge(int64_t n)
+{
+    num_traversed_edges[omp_get_thread_num()] += n;
+}
+
 #if defined(ENABLE_PERF_HOOKS)
 
 std::vector<std::string>
@@ -49,12 +55,6 @@ Hooks::getPerfGroupSize()
         printf("WARNING: Perf group size unspecified, defaulting to 4\n");
         return 4;
     }
-}
-
-void
-Hooks::traverse_edge(int64_t n)
-{
-    num_traversed_edges[omp_get_thread_num()] += n;
 }
 
 Hooks::Hooks()

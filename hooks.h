@@ -8,6 +8,7 @@ extern "C" {
 #include <inttypes.h>
 #include <chrono>
 #include <vector>
+#include <omp.h>
 
 #if defined(ENABLE_SNIPER_HOOKS)
     #include <hooks_base.h>
@@ -17,7 +18,6 @@ extern "C" {
     // Nothing to include here
 #elif defined(ENABLE_PERF_HOOKS)
     #include <perf.h>
-    #include <omp.h>
 #endif
 
 class Hooks
@@ -48,6 +48,6 @@ private:
     std::vector<std::string> getPerfEventNames();
     int getPerfGroupSize();
 #else
-    Hooks();
+    Hooks() = default;
 #endif
 };
