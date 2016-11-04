@@ -82,7 +82,7 @@ Hooks::getPerfGroupSize()
 #endif
 
 Hooks::Hooks(std::string filename, int num_threads)
- : out(filename)
+ : out(filename, std::ofstream::app)
  , num_traversed_edges(num_threads)
 #if defined(ENABLE_PERF_HOOKS)
  , perf_event_names(getPerfEventNames())
