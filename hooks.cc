@@ -151,11 +151,12 @@ Hooks::region_end(std::string name) {
     results["pid"] = rank;
     #endif
     results["time_ms"] = duration<double, std::milli>(t2-t1).count();
-    std::cout
+
 #ifdef HOOKS_PRETTY_PRINT
-    << std::setw(2)
+    out << std::setw(2) << results << std::endl;
+#else
+    out << results << std::endl;
 #endif
-    << results << std::endl;
 
     return 0;
 }
